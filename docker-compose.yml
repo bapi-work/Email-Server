@@ -21,6 +21,7 @@ services:
       - NODE_ENV=production
       - DB_HOST=postgres
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=
     volumes:
       - mail_data:/var/cloudmail
       - mail_logs:/var/log/cloudmail
@@ -75,22 +76,24 @@ services:
     networks:
       - mailnet
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-cloudmail} -d ${DB_NAME:-cloudmail}"]
-      interval: 10s
+      test: ["CMD", "pg_isready", "-U", "${DB_USER:-cloudmail}"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     # Uncomment to expose locally (dev only):
     # ports:
     #   - "5432:5432"
 
   # ─── Redis ──────────────────────────────────────────────────
+  # No password on the internal Docker network — Redis is not exposed externally.
+  # To enable auth, set REDIS_PASSWORD in .env and uncomment --requirepass below.
   redis:
     image: redis:7-alpine
     container_name: cloudmail-redis
     restart: unless-stopped
     command: >
       redis-server
-      --requirepass ${REDIS_PASSWORD:-}
       --maxmemory 256mb
       --maxmemory-policy allkeys-lru
       --appendonly yes
@@ -100,9 +103,10 @@ services:
       - mailnet
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
     # Uncomment to expose locally (dev only):
     # ports:
     #   - "6379:6379"
