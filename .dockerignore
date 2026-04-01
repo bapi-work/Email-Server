@@ -1,0 +1,13 @@
+node_modules
+.env
+*.log
+logs/
+ssl/
+dkim-keys/
+storage/
+.git
+.gitignore
+docs/
+scripts/
+Makefile
+README.md

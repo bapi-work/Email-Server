@@ -15,7 +15,7 @@ WORKDIR /app
 
 # Install dependencies first (cache layer)
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev --no-audit --no-fund
 
 # Copy application source
 COPY src/ ./src/
