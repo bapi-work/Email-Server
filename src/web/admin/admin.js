@@ -52,7 +52,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   errEl.classList.add('d-none');
   showSpinner(true);
   try {
-    const data = await apiFetch('/auth/login', { method: 'POST', body: { email, password } });
+    const data = await apiFetch('/auth/admin/login', { method: 'POST', body: { email, password } });
     if (data?.token) {
       token = data.token;
       localStorage.setItem('cm_admin_token', token);
@@ -75,7 +75,7 @@ function logout() {
 }
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
-  await apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
+  await apiFetch('/auth/admin/logout', { method: 'POST' }).catch(() => {});
   logout();
 });
 
@@ -141,7 +141,7 @@ async function loadDomains() {
   const data = await apiFetch('/domains');
   if (!data) return;
   const tbody = document.getElementById('domains-tbody');
-  tbody.innerHTML = data.data.map(d => `
+  tbody.innerHTML = data.domains.map(d => `
     <tr>
       <td><strong>${d.name}</strong><br><small class="text-muted">${d.description || ''}</small></td>
       <td>${d.dkim_enabled ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>'}</td>
@@ -160,7 +160,7 @@ async function loadMailboxes() {
   const data = await apiFetch('/mailboxes');
   if (!data) return;
   const tbody = document.getElementById('mailboxes-tbody');
-  tbody.innerHTML = data.data.map(m => `
+  tbody.innerHTML = data.mailboxes.map(m => `
     <tr>
       <td><strong>${m.username}@${m.domain_name}</strong></td>
       <td>${m.full_name || '—'}</td>
@@ -239,7 +239,7 @@ async function loadDnsWizard() {
   if (!data) return;
   const select = document.getElementById('dns-domain-select');
   select.innerHTML = '<option value="">-- choose domain --</option>' +
-    data.data.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+    data.domains.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
 }
 
 document.getElementById('dns-load-btn').addEventListener('click', async () => {
@@ -476,7 +476,7 @@ document.getElementById('change-password-form').addEventListener('submit', async
   if (newPassword !== confirmPassword) return toast('Passwords do not match', 'warning');
   showSpinner(true);
   try {
-    await apiFetch('/auth/password', { method: 'PUT', body: { currentPassword, newPassword } });
+    await apiFetch('/auth/admin/password', { method: 'PUT', body: { currentPassword, newPassword } });
     toast('Password updated!');
     document.getElementById('change-password-form').reset();
   } catch (err) { toast(err.message, 'danger'); }
@@ -488,7 +488,7 @@ document.getElementById('change-password-form').addEventListener('submit', async
 async function populateDomainSelects() {
   const data = await apiFetch('/domains');
   if (!data) return;
-  const options = data.data.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+  const options = data.domains.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
   document.getElementById('new-mb-domain').innerHTML = options;
   document.getElementById('new-alias-domain').innerHTML = options;
 }
@@ -509,7 +509,7 @@ function showApp() {
 (async () => {
   if (token) {
     try {
-      const me = await apiFetch('/auth/me');
+      const me = await apiFetch('/auth/admin/me');
       if (me) {
         document.getElementById('admin-name').textContent = me.email;
         showApp();

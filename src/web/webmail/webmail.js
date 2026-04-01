@@ -61,7 +61,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   errEl.classList.add('d-none');
   showSpinner(true);
   try {
-    const data = await fetch(API + '/auth/login', {
+    const data = await fetch('/api/auth/webmail/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -92,7 +92,7 @@ function doLogout() {
 }
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
-  await apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
+  await apiFetch('/auth/webmail/logout', { method: 'POST' }).catch(() => {});
   doLogout();
 });
 

@@ -261,9 +261,32 @@ class BulkEmailQueue {
     return result;
   }
 
+  async addJob(data) {
+    return this.queue.add(data, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 5000 },
+    });
+  }
+
+  start() {
+    logger.info('Bulk email queue worker ready');
+  }
+
+  stop() {
+    return this.queue.close();
+  }
+
   async close() {
     await this.queue.close();
   }
 }
+
+// Singleton
+let _instance = null;
+
+BulkEmailQueue.getInstance = function () {
+  if (!_instance) _instance = new BulkEmailQueue();
+  return _instance;
+};
 
 module.exports = BulkEmailQueue;

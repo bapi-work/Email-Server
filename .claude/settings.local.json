@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(find e:/docker-local-test/Claude/Email-Server -type f -name *.js -o -name *.json -o -name *.sql -o -name *.md -o -name *.sh -o -name *.conf -o -name *.html)",
-      "Read(//c/Users/bapie/.claude/projects/e--docker-local-test-Claude-Email-Server/memory/**)"
+      "Read(//c/Users/bapie/.claude/projects/e--docker-local-test-Claude-Email-Server/memory/**)",
+      "Bash(docker exec cloudmail node -e \":*)",
+      "Bash(docker exec:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijc1ZWVlYTEyLTI2NGUtNDA5NC04MjUyLWYzNDI1MjQ4OWJkZiIsImVtYWlsIjoiYWRtaW5AeW91cmRvbWFpbi5jb20iLCJ0eXBlIjoiYWRtaW4iLCJyb2xlIjoic3VwZXJhZG1pbiIsImlhdCI6MTc3NTA1MTE4NSwiZXhwIjoxNzc1MTM3NTg1fQ.9oGjTx5EuvbrXqGOVjoDcUX3FEAXCai46EokDrauc34\")",
+      "Bash(__NEW_LINE_0de278fa7506f139__ docker:*)",
+      "Bash(__NEW_LINE_418613f22a009f5d__ docker:*)",
+      "Bash(sed -n '40,50p' e:/docker-local-test/Claude/Email-Server/src/api/routes/domains.js)",
+      "Bash(sed -n '43,53p' e:/docker-local-test/Claude/Email-Server/src/api/routes/mailboxes.js)"
     ]
   }
 }
