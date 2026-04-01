@@ -4,7 +4,7 @@ FROM node:20-alpine
 RUN apk add --no-cache \
     openssl \
     ca-certificates \
-    dnsutils \
+    bind-tools \
     tzdata \
     curl
 
