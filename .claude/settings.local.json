@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find e:/docker-local-test/Claude/Email-Server -type f -name *.js -o -name *.json -o -name *.sql -o -name *.md -o -name *.sh -o -name *.conf -o -name *.html)",
+      "Read(//c/Users/bapie/.claude/projects/e--docker-local-test-Claude-Email-Server/memory/**)"
+    ]
+  }
+}

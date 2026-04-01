@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CloudMail Webmail</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+  <style>
+    :root { --sidebar-w: 220px; --folder-w: 200px; }
+    body { background: #f0f2f5; font-size: 14px; overflow: hidden; height: 100vh; }
+    #login-screen { display: flex; align-items: center; justify-content: center; height: 100vh; background: #1e293b; }
+    .login-card { background: #fff; border-radius: 16px; padding: 40px; width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+
+    #app { display: none; height: 100vh; flex-direction: column; }
+    .topbar { background: #1e293b; color: #f1f5f9; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .topbar .brand { font-weight: 700; color: #60a5fa; font-size: 16px; }
+    #workspace { display: flex; flex: 1; overflow: hidden; }
+
+    /* Folder panel */
+    #folder-panel { width: var(--folder-w); background: #fff; border-right: 1px solid #e2e8f0; overflow-y: auto; flex-shrink: 0; }
+    .folder-item { padding: 8px 16px; cursor: pointer; border-radius: 6px; margin: 2px 8px; display: flex; justify-content: space-between; align-items: center; }
+    .folder-item:hover, .folder-item.active { background: #eff6ff; color: #1d4ed8; }
+    .folder-item .badge { font-size: 10px; }
+
+    /* Message list */
+    #msg-list-panel { width: 320px; border-right: 1px solid #e2e8f0; background: #fff; overflow-y: auto; flex-shrink: 0; }
+    #msg-list-header { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 8px; }
+    .msg-item { padding: 10px 14px; border-bottom: 1px solid #f8f9fa; cursor: pointer; transition: background .1s; }
+    .msg-item:hover { background: #f8fafc; }
+    .msg-item.active { background: #eff6ff; }
+    .msg-item.unread .msg-subject { font-weight: 600; }
+    .msg-from { font-size: 13px; font-weight: 500; }
+    .msg-subject { font-size: 13px; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msg-date { font-size: 11px; color: #94a3b8; }
+    .msg-preview { font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Message viewer */
+    #msg-view-panel { flex: 1; background: #fff; overflow-y: auto; display: flex; flex-direction: column; }
+    #msg-header-area { padding: 24px 28px 16px; border-bottom: 1px solid #f1f5f9; flex-shrink: 0; }
+    #msg-body-area { flex: 1; padding: 20px 28px; overflow-y: auto; }
+    #compose-panel { flex: 1; padding: 24px 28px; display: none; flex-direction: column; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      #folder-panel { display: none; }
+      #msg-list-panel { width: 100%; }
+      #msg-view-panel { display: none; }
+    }
+
+    .spinner-overlay { position: fixed; inset: 0; background: rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center; z-index: 9999; display: none; }
+    .auth-badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+    .auth-pass { background: #d1fae5; color: #065f46; }
+    .auth-fail { background: #fee2e2; color: #991b1b; }
+    .auth-none { background: #f1f5f9; color: #64748b; }
+    .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<div class="spinner-overlay" id="spinner"><div class="spinner-border text-primary"></div></div>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="text-center mb-4">
+      <i class="bi bi-envelope-fill text-primary" style="font-size:2.5rem"></i>
+      <h4 class="mt-2 fw-bold">CloudMail</h4>
+      <p class="text-muted small">Webmail</p>
+    </div>
+    <div id="login-error" class="alert alert-danger d-none"></div>
+    <form id="login-form">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Email</label>
+        <input type="email" id="wm-email" class="form-control" placeholder="user@domain.com" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Password</label>
+        <input type="password" id="wm-password" class="form-control" required />
+      </div>
+      <button type="submit" class="btn btn-primary w-100 fw-semibold">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <!-- Topbar -->
+  <div class="topbar">
+    <span class="brand"><i class="bi bi-envelope-fill me-2"></i>CloudMail</span>
+    <div class="d-flex align-items-center gap-3">
+      <button class="btn btn-primary btn-sm" id="compose-btn"><i class="bi bi-pencil-fill me-1"></i>Compose</button>
+      <span id="user-email" class="text-muted small"></span>
+      <button class="btn btn-outline-light btn-sm" id="logout-btn"><i class="bi bi-box-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <div id="workspace">
+    <!-- Folders -->
+    <div id="folder-panel">
+      <div class="p-3 pb-1">
+        <small class="text-muted fw-semibold text-uppercase">Folders</small>
+      </div>
+      <div id="folder-list"></div>
+      <hr class="mx-3">
+      <div class="p-3 pt-1">
+        <button class="btn btn-outline-secondary btn-sm w-100" id="new-folder-btn"><i class="bi bi-plus me-1"></i>New Folder</button>
+      </div>
+    </div>
+
+    <!-- Message List -->
+    <div id="msg-list-panel">
+      <div id="msg-list-header">
+        <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Search..." />
+        <button class="btn btn-outline-secondary btn-sm" id="refresh-btn" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
+      <div id="filter-bar" class="px-2 py-1 border-bottom d-flex gap-1">
+        <button class="btn btn-sm btn-light active" data-filter="all">All</button>
+        <button class="btn btn-sm btn-light" data-filter="unread">Unread</button>
+        <button class="btn btn-sm btn-light" data-filter="flagged">Flagged</button>
+      </div>
+      <div id="message-list"></div>
+    </div>
+
+    <!-- Message Viewer -->
+    <div id="msg-view-panel">
+      <div class="empty-state" id="empty-view">
+        <i class="bi bi-envelope-open" style="font-size:3rem;opacity:.3"></i>
+        <p class="mt-2 text-muted">Select a message to read</p>
+      </div>
+
+      <div id="msg-content" style="display:none;flex-direction:column;height:100%">
+        <div id="msg-header-area">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 id="msg-subject" class="fw-bold mb-0"></h5>
+            <div class="d-flex gap-1">
+              <button class="btn btn-sm btn-outline-secondary" id="reply-btn" title="Reply"><i class="bi bi-reply"></i></button>
+              <button class="btn btn-sm btn-outline-secondary" id="forward-btn" title="Forward"><i class="bi bi-forward"></i></button>
+              <button class="btn btn-sm btn-outline-warning" id="flag-btn" title="Flag"><i class="bi bi-flag"></i></button>
+              <button class="btn btn-sm btn-outline-danger" id="delete-btn" title="Delete"><i class="bi bi-trash"></i></button>
+            </div>
+          </div>
+          <div class="text-muted small mb-1" id="msg-from-line"></div>
+          <div class="text-muted small mb-2" id="msg-to-line"></div>
+          <div id="msg-auth-badges" class="d-flex gap-1"></div>
+        </div>
+        <div id="msg-body-area"></div>
+        <div id="msg-attachments" class="px-4 py-2 border-top d-none"></div>
+      </div>
+
+      <!-- Compose Panel -->
+      <div id="compose-panel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0" id="compose-title">New Message</h5>
+          <button class="btn btn-sm btn-outline-secondary" id="close-compose-btn"><i class="bi bi-x"></i></button>
+        </div>
+        <form id="compose-form" class="d-flex flex-column flex-grow-1 gap-2">
+          <input type="text" class="form-control" id="c-to" placeholder="To" />
+          <input type="text" class="form-control" id="c-cc" placeholder="Cc (optional)" />
+          <input type="text" class="form-control" id="c-subject" placeholder="Subject" />
+          <textarea class="form-control flex-grow-1" id="c-body" placeholder="Message..." style="min-height:200px;resize:none"></textarea>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i>Send</button>
+            <button type="button" class="btn btn-outline-secondary" id="save-draft-btn"><i class="bi bi-save me-1"></i>Save Draft</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div><!-- /workspace -->
+</div><!-- /app -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="webmail.js"></script>
+</body>
+</html>
